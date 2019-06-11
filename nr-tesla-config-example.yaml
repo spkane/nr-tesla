@@ -1,0 +1,13 @@
+# Copy to ${HOME}/.nr-tesla/config.yaml and then edit
+options:
+    awake_check_period: 60
+    active_check_period: 1
+tesla:
+    client_id: ""
+    client_secret: ""
+    username: ""
+    password: ""
+new_relic:
+    app_name: "tesla"
+    license_key: ""
+
