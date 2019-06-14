@@ -8,7 +8,7 @@
 * Build
   * `go build .` or `docker build -t nr-tesla:latest .`
 * Run
-  * `./nr-tesla` or 
+  * `./nr-tesla` or `docker run -v ${HOME}/.nr-tesla:/root/.nr-tesla nr-tesla:latest`
 * Debug
-  * `TESLA_DEBUG=true ./nr-tesla`
+  * `TESLA_DEBUG=true ./nr-tesla` or `docker run -e TESLA_DEBUG=true -v ${HOME}/.nr-tesla:/root/.nr-tesla nr-tesla:latest`
 

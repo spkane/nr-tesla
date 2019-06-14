@@ -56,7 +56,12 @@ func getVehicles(client *tesla.Client, nr newrelic.Application) (tesla.Vehicles,
 	}
 	es := newrelic.StartExternalSegment(txn, nil)
 	defer es.End()
-	vehicles, err := client.Vehicles()
+
+	var vehicles tesla.Vehicles
+	err = retry(25, 5*time.Second, func() (err error) {
+		vehicles, err = client.Vehicles()
+		return
+	})
 	if err != nil {
 		nr.RecordCustomEvent("tesla_api_call", map[string]interface{}{
 			"call":  "Vehicles",
@@ -65,11 +70,13 @@ func getVehicles(client *tesla.Client, nr newrelic.Application) (tesla.Vehicles,
 		txn.NoticeError(err)
 		return nil, err
 	}
+
 	nr.RecordCustomMetric("tesla_vehicle_count", float64(len(vehicles)))
 	nr.RecordCustomEvent("tesla_api_call", map[string]interface{}{
 		"call":  "Vehicles",
 		"error": false,
 	})
+
 	return vehicles, nil
 }
 
@@ -100,7 +107,7 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake
 
 	// Get vehicle charge data
 	var charge *tesla.ChargeState
-	err = retry(5, 2*time.Second, func() (err error) {
+	err = retry(25, 5*time.Second, func() (err error) {
 		charge, err = vehicle.ChargeState()
 		return
 	})
@@ -154,7 +161,7 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake
 
 	// Get vehicle climate data
 	var climate *tesla.ClimateState
-	err = retry(5, 2*time.Second, func() (err error) {
+	err = retry(25, 5*time.Second, func() (err error) {
 		climate, err = vehicle.ClimateState()
 		return
 	})
@@ -197,7 +204,7 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake
 
 	// Get vehicle drive data
 	var drive *tesla.DriveState
-	err = retry(5, 2*time.Second, func() (err error) {
+	err = retry(25, 5*time.Second, func() (err error) {
 		drive, err = vehicle.DriveState()
 		return
 	})
@@ -225,7 +232,7 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake
 
 	// Get vehicle gui data
 	var gui *tesla.GuiSettings
-	err = retry(5, 2*time.Second, func() (err error) {
+	err = retry(25, 5*time.Second, func() (err error) {
 		gui, err = vehicle.GuiSettings()
 		return
 	})
@@ -253,7 +260,7 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake
 
 	// Get vehicle state data
 	var vstate *tesla.VehicleState
-	err = retry(5, 2*time.Second, func() (err error) {
+	err = retry(25, 5*time.Second, func() (err error) {
 		vstate, err = vehicle.VehicleState()
 		return
 	})
@@ -376,7 +383,7 @@ func checkLoop(cnf conf, nr newrelic.Application, client *tesla.Client) {
 	var vehicles tesla.Vehicles
 	for {
 
-		err := retry(5, 2*time.Second, func() (err error) {
+		err := retry(25, 5*time.Second, func() (err error) {
 			vehicles, err = getVehicles(client, nr)
 			return
 		})
@@ -386,9 +393,14 @@ func checkLoop(cnf conf, nr newrelic.Application, client *tesla.Client) {
 		}
 
 		vehicle := vehicles[0]
-		_, err = vehicle.MobileEnabled()
+
+		err = retry(25, 5*time.Second, func() (err error) {
+			_, err = vehicle.MobileEnabled()
+			return
+		})
 		if err != nil {
 			fatalError(err, 1, nr)
+			return
 		}
 
 		log.WithFields(log.Fields{
@@ -419,9 +431,15 @@ func main() {
 	cfg := newrelic.NewConfig(cnf.NewRelic["app_name"], cnf.NewRelic["license_key"])
 	cfg.DistributedTracer.Enabled = true
 	cfg.Logger = nrlog.StandardLogger()
-	nr, err := newrelic.NewApplication(cfg)
+
+	var nr newrelic.Application
+	err := retry(25, 5*time.Second, func() (err error) {
+		nr, err = newrelic.NewApplication(cfg)
+		return
+	})
 	if err != nil {
 		fatalError(err, 1, nr)
+		return
 	}
 
 	sigchan := make(chan os.Signal)
@@ -436,15 +454,20 @@ func main() {
 		log.Warn(err)
 	}
 
-	client, err := tesla.NewClient(
+	var client *tesla.Client
+	err = retry(25, 5*time.Second, func() (err error) {
+		client, err = tesla.NewClient(
 		&tesla.Auth{
 			ClientID:     cnf.Tesla["client_id"],
 			ClientSecret: cnf.Tesla["client_secret"],
 			Email:        cnf.Tesla["username"],
 			Password:     cnf.Tesla["password"],
 		})
+		return
+	})
 	if err != nil {
 		fatalError(err, 1, nr)
+		return
 	}
 
 	vehicles, err := getVehicles(client, nr)
