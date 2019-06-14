@@ -1,13 +1,19 @@
 # Copy to ${HOME}/.nr-tesla/config.yaml and then edit
 options:
-    awake_check_period: 60
+    # The amount of minutes between checks when car is asleep or fully charged and stopped
+    awake_check_period: 15
+    # The normal check period in minutes
     active_check_period: 1
 tesla:
+    # Client ID and Secret can be found here: https://tesla-api.timdorr.com/api-basics/authentication
     client_id: ""
     client_secret: ""
+    # Your Tesla username/email address and password
     username: ""
     password: ""
 new_relic:
-    app_name: "tesla"
+    # The application name you want to use in New Relic
+    app_name: "nr-tesla"
+    # Your New Relic License Key
     license_key: ""
 
