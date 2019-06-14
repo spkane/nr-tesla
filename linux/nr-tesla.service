@@ -1,0 +1,11 @@
+[Unit]
+Description=Report Tesla state data to New Relic
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/opt/bin/nr-tesla
+
+[Install]
+WantedBy=multi-user.target

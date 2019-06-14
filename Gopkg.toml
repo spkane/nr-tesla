@@ -30,8 +30,8 @@
   version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/jsgoecke/tesla"
+  branch = "skane-api-tweaks"
+  name = "github.com/spkane/tesla"
 
 [[constraint]]
   name = "github.com/newrelic/go-agent"

@@ -10,14 +10,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:00bf165064f2083532ba9741e5e685a0d7ddff2c7f4cc9d9ad005ccc65a9a7b9"
-  name = "github.com/jsgoecke/tesla"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "112508e1374ed7e3670569c6b6f8e8fc76b10b94"
-
-[[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
   name = "github.com/konsorten/go-windows-terminal-sequences"
   packages = ["."]
@@ -52,6 +44,14 @@
   version = "v1.4.2"
 
 [[projects]]
+  branch = "skane-api-tweaks"
+  digest = "1:6c0adfa6f3153be2185fc03ba9d57f9c8a336bded9e40604c3b9bf0dd8dd4015"
+  name = "github.com/spkane/tesla"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0058df0f4341024836b348193f9c025593a10ce8"
+
+[[projects]]
   branch = "master"
   digest = "1:010311506e3917b54487c35a4277e2709678a40c1587d82492c40b78b6a0a01d"
   name = "golang.org/x/sys"
@@ -72,10 +72,10 @@
   analyzer-version = 1
   input-imports = [
     "github.com/atrox/homedir",
-    "github.com/jsgoecke/tesla",
     "github.com/newrelic/go-agent",
     "github.com/newrelic/go-agent/_integrations/nrlogrus",
     "github.com/sirupsen/logrus",
+    "github.com/spkane/tesla",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

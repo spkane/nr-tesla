@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/atrox/homedir"
-	tesla "github.com/jsgoecke/tesla"
 	newrelic "github.com/newrelic/go-agent"
 	nrlog "github.com/newrelic/go-agent/_integrations/nrlogrus"
 	log "github.com/sirupsen/logrus"
+	tesla "github.com/spkane/tesla"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -30,6 +30,8 @@ func (c *conf) getConf() *conf {
 	if err != nil {
 		log.Printf("could not determine user's home directory (#%v)", err)
 	}
+
+        log.Printf("attempting to read config from: %s/.nr-tesla/config.yaml", dir)
 
 	yamlFile, err := ioutil.ReadFile(dir + "/.nr-tesla/config.yaml")
 	if err != nil {
@@ -72,7 +74,7 @@ func getVehicles(client *tesla.Client, nr newrelic.Application) (tesla.Vehicles,
 }
 
 // checkState pulls and reports all the vehicle state data
-func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application) error {
+func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application, awake float64) error {
 	log.Debug("Checking all vehicle states")
 
 	// Record vehicle data
@@ -307,6 +309,15 @@ func checkState(vehicle struct{ *tesla.Vehicle }, nr newrelic.Application) error
 		return err
 	}
 
+	if (drive.Speed == 0) && (charge.ChargingState == "Complete") {
+		log.WithFields(log.Fields{
+			"drive_speed": drive.Speed,
+			"charging_state": charge.ChargingState,
+		}).Info("Vehicle in rest state...pausing checks")
+
+		time.Sleep(time.Duration(awake*60000000000))
+	}
+
 	return nil
 
 }
@@ -330,7 +341,7 @@ func init() {
 	if os.Getenv("TESLA_DEBUG") == "true" {
 		log.SetLevel(log.DebugLevel)
 	} else {
-		log.SetLevel(log.WarnLevel)
+		log.SetLevel(log.InfoLevel)
 	}
 }
 
@@ -382,16 +393,19 @@ func checkLoop(cnf conf, nr newrelic.Application, client *tesla.Client) {
 
 		log.WithFields(log.Fields{
 			"vehicle_state": vehicle.State,
-		}).Debug("Vehicle State")
+		}).Info("Vehicle State")
 
 		if (vehicle.State != "asleep") && (vehicle.State != "offline") {
-			err = checkState(vehicle, nr)
+			err = checkState(vehicle, nr, awake)
 			if err != nil {
 				fatalError(err, 1, nr)
 			}
 			time.Sleep(60 * time.Second)
 		} else {
-			time.Sleep(time.Duration(awake*60000000000) * time.Minute)
+			log.WithFields(log.Fields{
+				"vehicle_state": vehicle.State,
+			}).Info("Vehicle asleep or offline...pausing checks")
+			time.Sleep(time.Duration(awake*60000000000))
 		}
 	}
 }

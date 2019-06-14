@@ -1,0 +1,15 @@
+version: "3"
+services:
+  nr-tesla:
+    build:
+      context: "."
+    image: "nr-tesla:latest"
+    environment:
+      TESLA_DEBUG: "true"
+    volumes:
+      - "${HOME}/.nr-tesla:/root/.nr-tesla"
+    networks:
+      - "my-net"
+networks:
+  my-net:
+    driver: "bridge"
